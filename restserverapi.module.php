@@ -2,7 +2,7 @@
 
 class restserverapi extends CMSModule
 {
-	function restserver()
+	function restserverapi()
 	{
 	$this->CMSModule();
 	}
