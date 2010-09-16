@@ -18,15 +18,13 @@ class AuthTestController implements RestController {
 			array($post['username'],md5($post['password'])));
 		
 		$domain = $config['root_url'];
-		$postedDomain = $post['domain'];
+		$postedDomain = $post['cmsdomain'];
 			
+			$check = false;
 			if($AuthCheck > 0 && $postedDomain == $domain) {
 			  $check = true;
 			  }
-			  else{
-			  $check = false;
-			  }
-
+			  
 		$json = new Services_JSON();
         $rest->getResponse()->addHeader("Content-Type: application/json; charset=utf-8");
         $rest->getResponse()->addHeader("Content-Description: File Transfer");
