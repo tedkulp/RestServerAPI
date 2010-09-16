@@ -26,6 +26,5 @@ $rest->addMap("GET","/?pages","AdminController::listing");
 $rest->addMap("POST","/?pages","AdminController::insert");
 $rest->addMap("GET","/?page/[0-9]*","AdminController::view");
 
-
 echo $rest->execute();
 ?>
