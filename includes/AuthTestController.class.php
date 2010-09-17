@@ -12,7 +12,7 @@ class AuthTestController implements RestController {
         global $gCms;
 		$config = $gCms->GetConfig();
         $post = $rest->getRequest()->getPost();
-         error_log(print_r($post));  
+         //error_log(print_r($post));  
 		$db = &$gCms->GetDb();
 		$AuthCheck = $db->GetOne('select count(*) from '.cms_db_prefix().'users where username=? and password=?',
 			array($post['username'],md5($post['password'])));
