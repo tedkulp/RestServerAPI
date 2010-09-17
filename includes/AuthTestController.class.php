@@ -20,16 +20,17 @@ class AuthTestController implements RestController {
 		$domain = $config['root_url'];
 		$postedDomain = $post['cmsdomain'];
 			
-			$check = false;
+			$check = "false";
 			if($AuthCheck > 0 && $postedDomain == $domain) {
-			  $check = true;
-			  }
-			  
+			 $check = "true";
+			 }
+			 $output = array('sucess' => $check); 
+			 
 		$json = new Services_JSON();
         $rest->getResponse()->addHeader("Content-Type: application/json; charset=utf-8");
         $rest->getResponse()->addHeader("Content-Description: File Transfer");
 		$rest->getResponse()->addHeader("Content-Disposition: attachment; filename=authTest.json");
-        $rest->getResponse()->setResponse($json->encode($check));
+        $rest->getResponse()->setResponse($json->encode($output));
 
         return $rest;
     }
