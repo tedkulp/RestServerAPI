@@ -1,5 +1,4 @@
 <?php
-// cribbed from Marius Rugan's example for Diogo Souza da Silva's RestServer
 require_once( dirname(__FILE__).'/json.php' );
 
 class AuthTestController implements RestController {
@@ -17,14 +16,19 @@ class AuthTestController implements RestController {
 		$AuthCheck = $db->GetOne('select count(*) from '.cms_db_prefix().'users where username=? and password=?',
 			array($post['username'],md5($post['password'])));
 		
-		$domain = $config['root_url'];
+		
 		$postedDomain = $post['cmsdomain'];
+		$domain = $config['root_url'];
+		$signatureID = md5($config['db_name'] . $config['root_url'] . $config['root_path']);
 			
-			$check = "false";
+		$check = "false";
 			if($AuthCheck > 0 && $postedDomain == $domain) {
 			 $check = "true";
 			 }
-			 $output = array('sucess' => $check); 
+		$output = array(
+						'sucess' => $check,
+						'signature' => $signatureID
+						); 
 			 
 		$json = new Services_JSON();
         $rest->getResponse()->addHeader("Content-Type: application/json; charset=utf-8");
