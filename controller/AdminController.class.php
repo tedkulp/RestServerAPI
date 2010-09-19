@@ -15,6 +15,7 @@ class AdminController implements RestController
 
 		$query = 'SELECT * FROM '.cms_db_prefix().'content order by hierarchy';
 		$pages = $db->GetArray($query);
+		
 		$rest->getResponse()->setResponse(json_encode($pages));
 
 		return $rest;
