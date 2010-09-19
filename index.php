@@ -1,30 +1,44 @@
 <?php
 
-include_once '../../include.php';
-global $gCms;
-include_once 'includes/diogok-restserver-b1e641c/RestServer.class.php';
-include_once 'includes/AdminController.class.php';
+#########################################################################
+# Init
+#########################################################################
 
+require_once('../../include.php');
+require_once('lib/restserver/RestServer.class.php');
+require_once('lib/json.php');
+require_once('lib/common.functions.php');
+include_dir(dirname(__FILE__).'/controller/');
+include_dir(dirname(__FILE__).'/view/');
 
-$rest = new RestServer($_GET['q']) ;
+#########################################################################
+# Login
+#########################################################################
+
+$rest = new RestServer($_GET['q']);
 $ra = $rest->getAuthenticator();
 $ra->setRealm('CMSMS Mobile Admin');
 $ra->requireAuthentication(true);
-$u = $ra->GetUser();
-$p = $ra->GetPassword();
+$user = $ra->GetUser();
+$passwd = $ra->GetPassword();
 $db = &$gCms->GetDb();
 
-$res = $db->Execute('select user_id from '.cms_db_prefix().'users where username=? and password=?',
-	array($u,md5($p)));
-if ($res && $usr=$res->FetchRow())
-	{
-	$rest->setParameter('user_id',$usr['user_id']);
-	$ra->setAuthenticated(true);
-	}
+$query = 'SELECT user_id FROM '.cms_db_prefix().'users WHERE username=? AND password=?';
+$user_id = $db->GetOne($query, array($user,md5($passwd)));
 
-$rest->addMap("GET","/?pages","AdminController::listing");
-$rest->addMap("POST","/?pages","AdminController::insert");
-$rest->addMap("GET","/?page/[0-9]*","AdminController::view");
+if ($user_id) {
+
+	$rest->setParameter('user_id',$user_id);
+	$ra->setAuthenticated(true);
+}
+
+#########################################################################
+# Set map and execute
+#########################################################################
+
+$rest->addMap("GET","/?listpages","AdminController::listpages");
+$rest->addMap("POST","/?addpage","AdminController::addpage");
+$rest->addMap("GET","/?page/[0-9]*","AdminController::viewpage");
 
 echo $rest->execute();
 ?>

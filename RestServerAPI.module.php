@@ -1,15 +1,15 @@
 <?php
 
-class restserverapi extends CMSModule
+class RestServerAPI extends CMSModule
 {
-	function restserverapi()
+	function RestServerAPI()
 	{
 	$this->CMSModule();
 	}
 	
     function GetName()
   {
-    return 'restserverapi';
+    return 'RestServerAPI';
   }
   function GetVersion()
   {
