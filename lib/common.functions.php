@@ -6,7 +6,7 @@ function include_dir($path) {
 		
 		while (false !== ($file = readdir($dir))) {
 
-			if($file == '..' || $file == '.' || $file == 'index.html') continue;			
+			if($file == '..' || $file == '.' || $file == 'index.html' || $file == '.svn') continue;			
 			include_once($path.$file);
 		}
 		

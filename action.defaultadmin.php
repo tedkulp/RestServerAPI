@@ -3,9 +3,9 @@ if (!isset($gCms)) exit;
 ?>
 <h1>Syntax</h1>
 <ul>
-<li>GET <a href="<?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php?q=/pages"><?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php?q=/pages</a> - return a list of pages in JSON format</li>
-<li>GET <a href="<?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php?q=/page/15"><?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php?q=/page/page_id</a> - return a page detail in JSON format</li>
-<li>Not yet implemented. POST <?php echo $gCms->config['root_url']?>/modules/restserverapi/index.php?q=/page - insert/update a page</li>
+<li>GET <a href="<?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php/pages"><?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php?q=/pages</a> - return a list of pages in JSON format</li>
+<li>GET <a href="<?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php/pages/15"><?php echo $gCms->config['root_url']?>/modules/RestServerAPI/index.php?q=/page/page_id</a> - return a page detail in JSON format</li>
+<li>Not yet implemented. POST <?php echo $gCms->config['root_url']?>/modules/restserverapi/index.php/pages - insert/update a page</li>
 </ul>
 
 <h2>Authentication</h2>

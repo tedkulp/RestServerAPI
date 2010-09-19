@@ -6,7 +6,6 @@
 
 require_once('../../include.php');
 require_once('lib/restserver/RestServer.class.php');
-require_once('lib/json.php');
 require_once('lib/common.functions.php');
 include_dir(dirname(__FILE__).'/controller/');
 include_dir(dirname(__FILE__).'/view/');
@@ -15,7 +14,8 @@ include_dir(dirname(__FILE__).'/view/');
 # Login
 #########################################################################
 
-$rest = new RestServer($_GET['q']);
+$path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : $_GET['q'];
+$rest = new RestServer($path);
 $ra = $rest->getAuthenticator();
 $ra->setRealm('CMSMS Mobile Admin');
 $ra->requireAuthentication(true);
@@ -36,9 +36,9 @@ if ($user_id) {
 # Set map and execute
 #########################################################################
 
-$rest->addMap("GET","/?listpages","AdminController::listpages");
-$rest->addMap("POST","/?addpage","AdminController::addpage");
-$rest->addMap("GET","/?page/[0-9]*","AdminController::viewpage");
+$rest->addMap("GET","/?pages","AdminController::listpages");
+$rest->addMap("POST","/?pages","AdminController::addpage");
+$rest->addMap("GET","/?pages/[0-9]*","AdminController::viewpage");
 
 echo $rest->execute();
 ?>
