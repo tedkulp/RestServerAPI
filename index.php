@@ -42,7 +42,7 @@ $rest->addMap("GET","/?pages","AdminController::listpages");
 $rest->addMap("POST","/?pages","AdminController::addpage");
 $rest->addMap("GET","/?pages/[0-9]*","AdminController::viewpage");
 $rest->addMap("DELETE","/?pages/[0-9]*","AdminController::deletepage");
-$rest->addMap("POST","/?pages/[0-9]*\?_method=DELETE","AdminController::deletepage");
+$rest->addMap("POST","/?pages/[0-9]*","AdminController::postpage");
 
 echo $rest->execute();
 ?>

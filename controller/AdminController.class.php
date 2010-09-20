@@ -164,6 +164,23 @@ class AdminController implements RestController
 
 		return $rest;
 	}
+
+
+	/**
+	* handles incoming POST requests, and acts according to the _method parameter
+	*
+	*/
+	public function postpage(RestServer $rest) {
+		$get = $rest->getRequest()->getGet();
+		switch($get['_method']) {
+			case 'DELETE':
+				return $this->deletepage($rest);
+				break;
+			default:
+				return null;
+				break;
+		}
+	}
 	
     /**
      * Adds one CMSMS page
