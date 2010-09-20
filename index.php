@@ -4,6 +4,8 @@
 # Init
 #########################################################################
 
+$CMS_STYLESHEET = 1; // Hack to allow lang() to work.
+
 require_once('../../include.php');
 require_once('lib/restserver/RestServer.class.php');
 require_once('lib/common.functions.php');
@@ -39,6 +41,8 @@ if ($user_id) {
 $rest->addMap("GET","/?pages","AdminController::listpages");
 $rest->addMap("POST","/?pages","AdminController::addpage");
 $rest->addMap("GET","/?pages/[0-9]*","AdminController::viewpage");
+$rest->addMap("DELETE","/?pages/[0-9]*","AdminController::deletepage");
+$rest->addMap("POST","/?pages/[0-9]*\?_method=DELETE","AdminController::deletepage");
 
 echo $rest->execute();
 ?>
