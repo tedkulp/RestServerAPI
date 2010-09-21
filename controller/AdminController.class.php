@@ -59,10 +59,10 @@ class AdminController implements RestController
 
     /**
      * Adds one CMSMS page
-	 * @POST string $title required
-	 * @POST string $menutext required
-	 * @POST string $content_en required
-	 * @POST string $parent_id optional		 
+	 * @POST required: title, menutext, content_en
+	 * @POST optional: showinmenu, active, secure, cachable, searchable(FP), target, alias, metadata(FP), pagedata(FP), image, 
+					   thumbnail, titleatribute, accesskey, tabindex, disable_wysiwyg(FP), extra1, extra2, extra3, 
+					   additional_editors, template_id
      * @return RestServer $rest;
     */		
 	public function addpage(RestServer $rest)
@@ -70,47 +70,39 @@ class AdminController implements RestController
 		global $gCms;
 		$db = &$gCms->GetDb();
 		$contentops =& $gCms->GetContentOperations();
+		$templateops =& $gCms->GetTemplateOperations();		
 		$post = $rest->getRequest()->getPost();
 
-		/*
 		$userid = $rest->getParameter('user_id');
-		$page_secure = get_site_preference('page_secure',0);
-		$page_cachable = ((get_site_preference('page_cachable',"1")=="1")?true:false);
-		$active = ((get_site_preference('page_active',"1")=="1")?true:false);
-		$showinmenu = ((get_site_preference('page_showinmenu',"1")=="1")?true:false);
-		$metadata = get_site_preference('page_metadata');
-		*/
-
-		$userid = $rest->getParameter('user_id');
-		$page_secure = 0;
-		$page_cachable = true;
-		$active = true;
-		$showinmenu = true;
-		$metadata = '';		
-		$content_type = 'content';
+		$alias = isset($post['alias']) ? munge_string_to_url($post['alias'],true) : munge_string_to_url($post['menutext'],true);
+		$page_secure = isset($post['secure']) ? $post['secure'] : get_site_preference('page_secure',0); // Values: 0/1
+		$page_cachable = isset($post['cachable']) ? $post['cachable'] : ((get_site_preference('page_cachable',"1")=="1")?true:false); // Values: 0/1
+		$active = isset($post['active']) ? $post['active'] : ((get_site_preference('page_active',"1")=="1")?true:false); // Values: 0/1
+		$showinmenu = isset($post['showinmenu']) ? $post['showinmenu'] : ((get_site_preference('page_showinmenu',"1")=="1")?true:false); // Values: 0/1
+		$metadata = isset($post['metadata']) ? $post['metadata'] : get_site_preference('page_metadata');
+		$template_id = isset($post['template_id']) ? $post['template_id'] : $templateops->LoadDefaultTemplate()->id;
+/*
+		$extra1 = isset($post['extra1']) ? $post['extra1'] : get_site_preference('page_extra1','');
+		$extra2 = isset($post['extra2']) ? $post['extra2'] : get_site_preference('page_extra2','');
+		$extra3 = isset($post['extra3']) ? $post['extra3'] : get_site_preference('page_extra3','');
+*/		
 		$error = false;
 
-		/*	
 		$existingtypes = $contentops->ListContentTypes();
 
-		if (isset($post["content_type"]))
-		{
+		if (isset($post["content_type"])) {
+		
 			$content_type = $post["content_type"];
-		}
-		else
-		{
-			if (isset($existingtypes) && count($existingtypes) > 0)
-			{
+		} else {
+		
+			if (isset($existingtypes) && count($existingtypes) > 0) {
+
 				$content_type = 'content';
-			}
-			else
-			{
+			} else {
+			
 				$error = "No content types loaded!";
 			}
 		}
-		*/
-
-		//$contentops->LoadContentType($content_type);
 		
 		$parent_id = -1;
 		if (isset($post['parent_id'])) $parent_id = $post["parent_id"];
@@ -119,48 +111,41 @@ class AdminController implements RestController
 		$contentobj->SetAddMode();
 		$contentobj->SetOwner($userid);
 		$contentobj->SetCachable($page_cachable);
+		$contentobj->SetAlias($alias);
 		$contentobj->SetActive($active);
 		$contentobj->SetShowInMenu($showinmenu);
 		$contentobj->SetLastModifiedBy($userid);
 		$contentobj->SetParentId($parent_id);
-		
-		$templateops =& $gCms->GetTemplateOperations();
-		$dflt = $templateops->LoadDefaultTemplate();
-		
-		if(isset($dflt))
-		{
-			$contentobj->SetTemplateId($dflt->id);
-		}
-
 		$contentobj->SetMetadata($metadata);
-		$contentobj->SetPropertyValue('content_en', get_site_preference('defaultpagecontent')); // why?
-
-		if ($parent_id != -1) $contentobj->SetParentId($parent_id);
+		$contentobj->SetTemplateId($template_id);
 	
-		$contentobj->SetPropertyValue('searchable', get_site_preference('page_searchable',1));
-		$contentobj->SetPropertyValue('extra1', get_site_preference('page_extra1',''));
-		$contentobj->SetPropertyValue('extra2', get_site_preference('page_extra2',''));
-		$contentobj->SetPropertyValue('extra3', get_site_preference('page_extra3',''));
-		$tmp = get_site_preference('additional_editors');
+		$contentobj->SetPropertyValue('content_en', get_site_preference('defaultpagecontent'));	// Why?
+/*
+		$contentobj->SetPropertyValue('extra1', $extra1);
+		$contentobj->SetPropertyValue('extra2', $extra2);
+		$contentobj->SetPropertyValue('extra3', $extra3);
+*/
+		
+		$additional_editors = isset($post['additional_editors']) ? $post['additional_editors'] : get_site_preference('additional_editors'); // Value: string
 	
 		$tmp2 = array();
-		if(!empty($tmp))
-		{
-			$tmp2 = explode(',',$tmp);
+		if(!empty($additional_editors)) {
+		
+			$tmp2 = explode(',',$additional_editors);
 		}
 
 		$contentobj->SetAdditionalEditors($tmp2);
 		$contentobj->FillParams($post);
-
+	
 		$error = $contentobj->ValidateData();
-		if ($error === FALSE)
-		{
+		if ($error === FALSE) {
+		
 			$contentobj->Save();		
 			$contentops->SetAllHierarchyPositions();
 			audit($contentobj->Id(), $contentobj->Name(), 'Added Content');
 		}
 
-		$rest->getResponse()->setResponse(json_encode($error));
+		$rest->getResponse()->setResponse(json_encode($post));
 
 		return $rest;
 	}
