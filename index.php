@@ -10,7 +10,7 @@ require_once('../../include.php');
 require_once('lib/restserver/RestServer.class.php');
 require_once('lib/common.functions.php');
 include_dir(dirname(__FILE__).'/controller/');
-include_dir(dirname(__FILE__).'/view/');
+//include_dir(dirname(__FILE__).'/view/');
 $path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : $_GET['q'];
 $rest = new RestServer($path);
 

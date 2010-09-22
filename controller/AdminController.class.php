@@ -3,6 +3,10 @@
 class AdminController implements RestController
 {
 
+#########################################################################
+# Public functions
+#########################################################################
+
     /**
      * Contructor of RestServer
      * @param string $query Optional query to be treat as the URL
@@ -72,7 +76,7 @@ class AdminController implements RestController
 		$contentops =& $gCms->GetContentOperations();
 		$templateops =& $gCms->GetTemplateOperations();		
 		$post = $rest->getRequest()->getPost();
-
+		
 		$userid = $rest->getParameter('user_id');
 		$alias = isset($post['alias']) ? munge_string_to_url($post['alias'],true) : munge_string_to_url($post['menutext'],true);
 		$page_secure = isset($post['secure']) ? $post['secure'] : get_site_preference('page_secure',0); // Values: 0/1
@@ -81,12 +85,6 @@ class AdminController implements RestController
 		$showinmenu = isset($post['showinmenu']) ? $post['showinmenu'] : ((get_site_preference('page_showinmenu',"1")=="1")?true:false); // Values: 0/1
 		$metadata = isset($post['metadata']) ? $post['metadata'] : get_site_preference('page_metadata');
 		$template_id = isset($post['template_id']) ? $post['template_id'] : $templateops->LoadDefaultTemplate()->id;
-/*
-		$extra1 = isset($post['extra1']) ? $post['extra1'] : get_site_preference('page_extra1','');
-		$extra2 = isset($post['extra2']) ? $post['extra2'] : get_site_preference('page_extra2','');
-		$extra3 = isset($post['extra3']) ? $post['extra3'] : get_site_preference('page_extra3','');
-*/		
-		$error = false;
 
 		$existingtypes = $contentops->ListContentTypes();
 
@@ -120,11 +118,10 @@ class AdminController implements RestController
 		$contentobj->SetTemplateId($template_id);
 	
 		$contentobj->SetPropertyValue('content_en', get_site_preference('defaultpagecontent'));	// Why?
-/*
-		$contentobj->SetPropertyValue('extra1', $extra1);
-		$contentobj->SetPropertyValue('extra2', $extra2);
-		$contentobj->SetPropertyValue('extra3', $extra3);
-*/
+		$contentobj->SetPropertyValue('extra1', get_site_preference('page_extra3',''));
+		$contentobj->SetPropertyValue('extra2', get_site_preference('page_extra2',''));
+		$contentobj->SetPropertyValue('extra3', get_site_preference('page_extra3',''));
+
 		
 		$additional_editors = isset($post['additional_editors']) ? $post['additional_editors'] : get_site_preference('additional_editors'); // Value: string
 	
@@ -145,7 +142,7 @@ class AdminController implements RestController
 			audit($contentobj->Id(), $contentobj->Name(), 'Added Content');
 		}
 
-		$rest->getResponse()->setResponse(json_encode($post));
+		$rest->getResponse()->setResponse(json_encode($error));
 
 		return $rest;
 	}
@@ -165,84 +162,91 @@ class AdminController implements RestController
 		$contentid = $rest->getRequest()->getURI(2); // Second part of the URI
 		$mypages = author_pages($userid);
 
-		$error = false;
+		$error = array();
 		$access = (check_permission($userid, 'Remove Pages') && (check_ownership($userid,$contentid) || quick_check_authorship($contentid,$mypages))) || check_permission($userid, 'Manage All Content');
 
-		if ($access)
-		{
+		if ($access) {
+		
 			$node = &$hierManager->getNodeById($contentid);
-			if ($node)
-			{
+			if ($node) {
+			
 				$contentobj =& $node->getContent(true);
 				$childcount = 0;
 				$parentid = -1;
-				if (isset($node->parentNode))
-				{
+				if (isset($node->parentNode)) {
+				
 					$parent =& $node->parentNode;
-					if (isset($parent))
-					{
+					if (isset($parent)) {
+					
 						$parentContent =& $parent->getContent();
-						if (isset($parentContent))
-						{
+						if (isset($parentContent)) {
+						
 							$parentid = $parentContent->Id();
 							$childcount = $parent->getChildrenCount();
 						}
 					}
-				}
+				} 
 
-				if ($contentobj)
-				{
+				if ($contentobj) {
+				
 					$title = $contentobj->Name();
 		
 					#Check for children
 					if ($contentobj->HasChildren())
 					{
-						$error = 'Page has children'; // TODO: Trought $lang
+						$error[] = 'Page has children'; // TODO: Trought $lang
 					}
 		
 					#Check for default
 					if ($contentobj->DefaultContent())
 					{
-						$error = 'Page is default'; // TODO: Trought $lang
-					}
-				
-					if($error === false) {
-					
-						$contentobj->Delete();
-						$contentops->SetAllHierarchyPositions();
-						
-						#See if this is the last child... if so, remove
-						#the expand for it
-					/*	if ($childcount == 1 && $parentid > -1)
-						{
-							toggleexpand($parentid, true);
-						}
-						
-						#Do the same with this page as well
-						toggleexpand($contentid, true);
-						
-						audit($contentid, $title, 'Deleted Content');
-					*/	
-						$contentops->ClearCache();
-				
-					}
-				
+						$error[] = 'Page is default'; // TODO: Trought $lang
+					}				
 
 				}
+			} else {
+				
+				$error[] = 'FATAL: no node set'; // TODO: Trought $lang
 			}
-		}	
+			
+		} else {
+
+			$error[] = 'No access'; // TODO: Trought $lang
+		}
+
+		$error = count($error) > 0 ? $error : FALSE;		
+		if($error === false) {
+		
+			$contentobj->Delete();
+			$contentops->SetAllHierarchyPositions();
+			
+			if ($childcount == 1 && $parentid > -1) {
+
+				$this->toggleexpand($rest, $parentid, true);
+			}
+			
+			$this->toggleexpand($rest, $contentid, true);
+			
+			audit($contentid, $title, 'Deleted Content');			
+			$contentops->ClearCache();
+	
+		}		
 	
 		$rest->getResponse()->setResponse(json_encode($error));	
 
 	}
 
-/*	
-	private function toggleexpand($contentid, $collapse = false)
+
+#########################################################################
+# Private functions
+#########################################################################	
+	
+	private function toggleexpand(&$rest, $contentid, $collapse = false)
 	{
-		$userid = get_userid();
+		$userid = $rest->getParameter('user_id');
 		$openedArray=array();
-		if (get_preference($userid, 'collapse', '') != '')
-		{
+		if (get_preference($userid, 'collapse', '') != '') {
+		
 			$tmp  = explode('.',get_preference($userid, 'collapse'));
 			foreach ($tmp as $thisCol)
 			{
@@ -268,7 +272,6 @@ class AdminController implements RestController
 		}
 		set_preference($userid, 'collapse', $cs);
 	}	
-*/	
 	
 	
 }
