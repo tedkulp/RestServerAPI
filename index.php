@@ -9,6 +9,7 @@ $CMS_STYLESHEET = 1; // Hack to allow lang() to work.
 require_once('../../include.php');
 require_once('lib/restserver/RestServer.class.php');
 require_once('lib/common.functions.php');
+require_once('lib/misc.functions.php');
 include_dir(dirname(__FILE__).'/controller/');
 //include_dir(dirname(__FILE__).'/view/');
 $path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : $_GET['q'];
@@ -38,11 +39,16 @@ if ($user_id) {
 # Set map and execute
 #########################################################################
 
+// AdminController
 $rest->addMap("GET","/?pages","AdminController::listpages");
 $rest->addMap("POST","/?pages","AdminController::addpage");
 $rest->addMap("GET","/?pages/[0-9]*","AdminController::viewpage");
 $rest->addMap("DELETE","/?pages/[0-9]*","AdminController::deletepage");
 $rest->addMap("POST","/?pages/[0-9]*","AdminController::postpage");
+
+// SupportController
+$rest->addMap("GET","/?get/contenttype/[A-Za-z]*","SupportController::content_type");
+$rest->addMap("GET","/?get/contenttype/[A-Za-z]*/[0-9]*","SupportController::content_type");
 
 echo $rest->execute();
 ?>
