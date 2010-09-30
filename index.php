@@ -4,34 +4,52 @@
 # Init
 #########################################################################
 
-$CMS_STYLESHEET = 1; // Hack to allow lang() to work.
+$CMS_ADMIN_PAGE=1;
 
 require_once('../../include.php');
+require_once('../../lib/classes/class.user.inc.php'); // Useless? Explain this to me. -Stikki-
 require_once('lib/restserver/RestServer.class.php');
 require_once('lib/common.functions.php');
 require_once('lib/misc.functions.php');
 include_dir(dirname(__FILE__).'/controller/');
-//include_dir(dirname(__FILE__).'/view/');
 $path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : $_GET['q'];
 $rest = new RestServer($path);
+
+if(isset($_SESSION[CMS_USER_KEY]) && !isset($_GET[CMS_SECURE_PARAM_NAME])){
+	
+	$_GET[CMS_SECURE_PARAM_NAME] = $_SESSION[CMS_USER_KEY];
+}	
 
 #########################################################################
 # Login
 #########################################################################
 
+global $gCms;
 $ra = $rest->getAuthenticator();
 $ra->setRealm('CMSMS Mobile Admin');
 $ra->requireAuthentication(true);
 $user = $ra->GetUser();
 $passwd = $ra->GetPassword();
-$db = &$gCms->GetDb();
 
-$query = 'SELECT user_id FROM '.cms_db_prefix().'users WHERE username=? AND password=?';
-$user_id = $db->GetOne($query, array($user,md5($passwd)));
+$userops =& $gCms->GetUserOperations();
+$oneuser =& $userops->LoadUserByUsername($user, $passwd, true, true);
 
-if ($user_id) {
+if (isset($oneuser) && $oneuser == true) {
 
-	$rest->setParameter('user_id',$user_id);
+	generate_user_object($oneuser->id);
+	$_SESSION['login_user_id'] = $oneuser->id;
+	$_SESSION['login_user_username'] = $oneuser->username;
+	$default_cms_lang = get_preference($oneuser->id, 'default_cms_language');
+
+	if ($default_cms_lang != '') {
+	
+		$_SESSION['login_cms_language'] = $default_cms_lang;
+	}
+	
+	audit($oneuser->id, $oneuser->username, 'User Login');
+	Events::SendEvent('Core', 'LoginPost', array('user' => &$oneuser));	
+
+	$rest->setParameter('user_id', get_userid());
 	$ra->setAuthenticated(true);
 }
 
