@@ -194,25 +194,39 @@ class RestServer {
         }
 
         // In case a specific method should be called
-        if(count($parts = explode("::",$responseClass)) > 1) {
+        if(!is_array($responseClass) && count($parts = explode("::",$responseClass)) > 1) {
             $responseClass = $parts[0];
             $responseMethod = $parts[1];
         }
 
-        return $this->call(new $responseClass,$responseMethod)->show(); // Call the class and return the response
+		if (is_array($responseClass))
+			return $this->call($responseClass)->show(); // Call the class and return the response
+		else
+			return $this->call(new $responseClass,$responseMethod)->show(); // Call the class and return the response
     }
 
-    private function call($class,$method=null) {             
-        $this->stack[] = get_class($class) ;
-        if($method != null) {
-        } else if($class instanceof RestView) { // If is a view, call Show($restServer)
-            $method="show";
-        } else if($class instanceof RestController)  {  //If is a controller, call execute($restServer)
-            $method="execute";
-        } else {
-            Throw new Exception(get_class($class)." is not a RestAction");
-        }
-        $class = $class->$method($this);
+    private function call($class,$method=null) {
+		//If an object was returned (as an array of module obj
+		//and method name), then just call it.
+		if (is_array($class) && count($class) == 2)
+		{
+			list($class, $method) = $class;
+			$this->stack[] = $class;
+			$class = $class->$method($this);
+		}
+		else
+		{
+			$this->stack[] = get_class($class) ;
+			if($method != null) {
+			} else if($class instanceof RestView) { // If is a view, call Show($restServer)
+				$method="show";
+			} else if($class instanceof RestController)  {  //If is a controller, call execute($restServer)
+				$method="execute";
+			} else {
+				Throw new Exception(get_class($class)." is not a RestAction");
+			}
+			$class = $class->$method($this);
+		}
 
         if($class instanceof RestAction 
             && get_class($class) != $this->lastClass() ) {

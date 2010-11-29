@@ -68,5 +68,16 @@ $rest->addMap("POST","/?pages/[0-9]*","AdminController::postpage");
 $rest->addMap("GET","/?get/contenttype/[A-Za-z]*","SupportController::content_type");
 $rest->addMap("GET","/?get/contenttype/[A-Za-z]*/[0-9]*","SupportController::content_type");
 
+global $gCms;
+$ops = $gCms->GetModuleOperations();
+$modules = $ops->get_modules_with_capability('restserver');
+if (!empty($modules))
+{
+	foreach ($modules as $module_obj)
+	{
+		$module_obj->AddRestMap(&$rest);
+	}
+}
+
 echo $rest->execute();
 ?>
